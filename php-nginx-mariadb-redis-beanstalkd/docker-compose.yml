@@ -1,0 +1,68 @@
+version: '3.7'
+
+services:
+  # PHP 7.4
+  fpm74:
+    image: nucreativa/fpm:7.4
+    networks:
+      - app-network
+    volumes:
+      - ./www:/var/www
+    
+  # PHP 7.3
+  fpm73:
+    image: nucreativa/fpm:7.3
+    networks:
+      - app-network
+    volumes:
+      - ./www:/var/www
+    
+  # PHP 7.2
+  fpm72:
+    image: nucreativa/fpm:7.2
+    networks:
+      - app-network
+    volumes:
+      - ./www:/var/www
+
+  nginx:
+    image: nginx
+    restart: unless-stopped
+    networks:
+      - app-network
+    depends_on:
+      - fpm72
+      - fpm73
+      - fpm74
+    ports: 
+      - 80:80
+    volumes:
+      - ./templates:/etc/nginx/templates
+      - ./www:/var/www
+    environment:
+      - FPM_VERSION=fpm74
+      - NGINX_PORT=80
+
+  database:
+    image: mariadb
+    restart: always
+    networks:
+      - app-network
+    volumes:
+      - ./database:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=itsasecret
+
+  beanstalkd:
+    image: schickling/beanstalkd
+    networks:
+      - app-network
+
+  redis:
+    image: redis
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
